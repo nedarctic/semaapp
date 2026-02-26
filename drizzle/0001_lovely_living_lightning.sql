@@ -1,0 +1,1 @@
+ALTER TABLE "incidents" ADD COLUMN "secret_code_hash" text NOT NULL;
