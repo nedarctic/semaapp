@@ -17,8 +17,7 @@ type FetchData = {
   data?: any;
 };
 
-async function getTeamMembers() {
-
+export async function getCompanyId() {
   try {
     // 1. get user id from session
     const session = await getServerSession(authOptions);
@@ -32,10 +31,27 @@ async function getTeamMembers() {
 
     console.log("company id", companyId)
 
-    // 3. all users with the company id
-    const members = await db.select().from(users).where(eq(users.companyId, companyId));
+    return { success:true, data: companyId };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message.toString() : "Unknown error" }
+  }
+}
 
-    // 4. return members
+async function getTeamMembers() {
+
+  try {
+    // 1. get user id from session
+    const res = await getCompanyId();
+
+    // 2. all users with the company id
+    let members;
+    
+    if (res?.data) { 
+      const companyId = res.data;
+      members = await db.select().from(users).where(eq(users.companyId, companyId));
+    }
+
+    // 3. return members
     return { success: true, data: members };
   } catch (error) {
     return { error: error instanceof Error ? error.message.toString : "Unknown error" }
@@ -91,9 +107,9 @@ export default async function TeamPage() {
   const newHandlers = await getTeamHandlers();
   const admins = await getTeamAdmins();
 
-  if(newHandlers?.success) console.log("Handlers", newHandlers.data)
+  if (newHandlers?.success) console.log("Handlers", newHandlers.data)
 
-  if(admins?.success) console.log("Admins:", admins.data)
+  if (admins?.success) console.log("Admins:", admins.data)
 
   if (members.success) console.log("Members:", members.data)
 

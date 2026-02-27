@@ -104,7 +104,7 @@ export default function NewIncidentReport() {
             />
 
             <input
-              type="file"
+              type="file" multiple
               className="w-full text-sm text-black dark:text-white"
             />
           </div>

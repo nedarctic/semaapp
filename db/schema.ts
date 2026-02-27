@@ -104,6 +104,7 @@ export const reportingPages = pgTable("reporting_pages", {
     title: text("title"),
     introContent: text("intro_content"),
     policyUrl: text("policy_url"),
+    reportingPageUrl: text("reporting_page_url"),
 });
 
 export const senderTypeEnum = pgEnum("sender_type", [

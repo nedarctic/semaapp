@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@recharts/devtools": "^0.0.8",
+    "argon2": "^0.44.0",
     "bcrypt": "^6.0.0",
     "crypto": "^1.0.1",
     "drizzle-orm": "^0.45.1",
+    "minio": "^8.0.6",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "pg": "^8.18.0",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
+    "@types/minio": "^7.1.0",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",

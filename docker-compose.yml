@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio-sema-admin
+      MINIO_ROOT_PASSWORD: minio-sema-pass123
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - miniodata_semaapp:/data
+
+volumes:
+  miniodata_semaapp:

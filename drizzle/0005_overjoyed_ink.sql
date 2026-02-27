@@ -1,0 +1,1 @@
+ALTER TABLE "reporting_pages" ADD COLUMN "reporting_page_url" text;
