@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { minioClient } from "@/lib/minio";
 
 export function hashIncidentSecret(secret: string) {
     return crypto
@@ -6,3 +7,8 @@ export function hashIncidentSecret(secret: string) {
     .update(secret)
     .digest("hex")
 };
+
+export async function getPresignedUrl(filePath: string) {
+  const url = await minioClient.presignedGetObject("uploads", filePath, 60 * 5); // expires in 5 minutes
+  return url;
+}

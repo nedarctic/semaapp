@@ -28,7 +28,7 @@ export default function TrackIncidentPage() {
     }
 
     // Successful login → redirect to tracking page
-    window.location.href = "/track/incident";
+    window.location.href = "track/incident";
   }
 
   return (

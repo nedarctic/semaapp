@@ -260,135 +260,135 @@ export async function getClosedIncidentsByCategoriesForVariableDays(days: number
 
 // get handler avg resolution time
 export async function getHandlerDetails(id: number) {
-  const handler = users.find(u => u.id === id && u.role === "handler");
+    const handler = users.find(u => u.id === id && u.role === "handler");
 
-  if (!handler) return null;
+    if (!handler) return null;
 
-  // incidents assigned to handler
-  const incidents_assigned = incidents.filter(
-    inc => inc.assigned_handler_user_id === id
-  );
-
-  const total_assigned_incidents = incidents_assigned.length;
-
-  // closed incidents
-  const closed_incidents = incidents_assigned.filter(
-    inc => inc.closed_at !== null
-  );
-
-  const total_closed_incidents = closed_incidents.length;
-
-  // average resolution time (days)
-  let avg_resolution_time_days = 0;
-
-  if (total_closed_incidents > 0) {
-    const total_resolution_time = closed_incidents.reduce((sum, inc) => {
-      const created = new Date(inc.created_at).getTime();
-      const closed = new Date(inc.closed_at!).getTime();
-      return sum + (closed - created);
-    }, 0);
-
-    avg_resolution_time_days = Math.round(
-      total_resolution_time / total_closed_incidents / (1000 * 60 * 60 * 24)
-    );
-  }
-
-  // open incidents
-  const open_incidents = incidents_assigned.filter(
-    inc => inc.closed_at === null
-  );
-
-  const total_open_incidents = open_incidents.length;
-
-  // overdue incidents (open + past deadline)
-  const now = Date.now();
-
-  const overdue_incidents = open_incidents.filter(inc => {
-    if (!inc.deadline_at) return false;
-    return now > new Date(inc.deadline_at).getTime();
-  });
-
-  const total_overdue_incidents = overdue_incidents.length;
-
-  return {
-    handler_id: handler.id,
-    handler_name: handler.name,
-    total_assigned_incidents,
-    total_open_incidents,
-    total_overdue_incidents,
-    avg_resolution_time_days
-  };
-}
-
-export async function getAllHandlersDetails() {
-  const handlers = users.filter(u => u.role === "handler");
-
-  const results = await Promise.all(
-    handlers.map(h => getHandlerDetails(h.id))
-  );
-
-  return results.filter(Boolean);
-}
-
-
-export async function getAllHandlersWithDetails(): Promise<HandlerTeamStats[]> {
-  const handlers = users.filter(user => user.role === "handler");
-
-  return handlers.map(handler => {
-    const assigned = incidents.filter(
-      inc => inc.assigned_handler_user_id === handler.id
+    // incidents assigned to handler
+    const incidents_assigned = incidents.filter(
+        inc => inc.assigned_handler_user_id === id
     );
 
-    const total_assigned_incidents = assigned.length;
+    const total_assigned_incidents = incidents_assigned.length;
 
-    const open_incidents = assigned.filter(
-      inc => inc.closed_at === null
+    // closed incidents
+    const closed_incidents = incidents_assigned.filter(
+        inc => inc.closed_at !== null
+    );
+
+    const total_closed_incidents = closed_incidents.length;
+
+    // average resolution time (days)
+    let avg_resolution_time_days = 0;
+
+    if (total_closed_incidents > 0) {
+        const total_resolution_time = closed_incidents.reduce((sum, inc) => {
+            const created = new Date(inc.created_at).getTime();
+            const closed = new Date(inc.closed_at!).getTime();
+            return sum + (closed - created);
+        }, 0);
+
+        avg_resolution_time_days = Math.round(
+            total_resolution_time / total_closed_incidents / (1000 * 60 * 60 * 24)
+        );
+    }
+
+    // open incidents
+    const open_incidents = incidents_assigned.filter(
+        inc => inc.closed_at === null
     );
 
     const total_open_incidents = open_incidents.length;
 
+    // overdue incidents (open + past deadline)
+    const now = Date.now();
+
     const overdue_incidents = open_incidents.filter(inc => {
-      if (!inc.deadline_at) return false;
-      return new Date(inc.deadline_at).getTime() < Date.now();
+        if (!inc.deadline_at) return false;
+        return now > new Date(inc.deadline_at).getTime();
     });
 
     const total_overdue_incidents = overdue_incidents.length;
 
-    const closed_incidents = assigned.filter(
-      inc => inc.closed_at !== null
+    return {
+        handler_id: handler.id,
+        handler_name: handler.name,
+        total_assigned_incidents,
+        total_open_incidents,
+        total_overdue_incidents,
+        avg_resolution_time_days
+    };
+}
+
+export async function getAllHandlersDetails() {
+    const handlers = users.filter(u => u.role === "handler");
+
+    const results = await Promise.all(
+        handlers.map(h => getHandlerDetails(h.id))
     );
 
-    const avg_resolution_time_days =
-      closed_incidents.length === 0
-        ? null
-        : Math.round(
-            closed_incidents.reduce((sum, inc) => {
-              const created = new Date(inc.created_at).getTime();
-              const closed = new Date(inc.closed_at!).getTime();
-              return sum + (closed - created);
-            }, 0) /
-              closed_incidents.length /
-              (1000 * 60 * 60 * 24)
-          );
+    return results.filter(Boolean);
+}
 
-    return {
-      handler_id: handler.id,
-      name: handler.name,
-      email: handler.email,
-      total_assigned_incidents,
-      total_open_incidents,
-      total_overdue_incidents,
-      avg_resolution_time_days,
-    };
-  });
+
+export async function getAllHandlersWithDetails(): Promise<HandlerTeamStats[]> {
+    const handlers = users.filter(user => user.role === "handler");
+
+    return handlers.map(handler => {
+        const assigned = incidents.filter(
+            inc => inc.assigned_handler_user_id === handler.id
+        );
+
+        const total_assigned_incidents = assigned.length;
+
+        const open_incidents = assigned.filter(
+            inc => inc.closed_at === null
+        );
+
+        const total_open_incidents = open_incidents.length;
+
+        const overdue_incidents = open_incidents.filter(inc => {
+            if (!inc.deadline_at) return false;
+            return new Date(inc.deadline_at).getTime() < Date.now();
+        });
+
+        const total_overdue_incidents = overdue_incidents.length;
+
+        const closed_incidents = assigned.filter(
+            inc => inc.closed_at !== null
+        );
+
+        const avg_resolution_time_days =
+            closed_incidents.length === 0
+                ? null
+                : Math.round(
+                    closed_incidents.reduce((sum, inc) => {
+                        const created = new Date(inc.created_at).getTime();
+                        const closed = new Date(inc.closed_at!).getTime();
+                        return sum + (closed - created);
+                    }, 0) /
+                    closed_incidents.length /
+                    (1000 * 60 * 60 * 24)
+                );
+
+        return {
+            handler_id: handler.id,
+            name: handler.name,
+            email: handler.email,
+            total_assigned_incidents,
+            total_open_incidents,
+            total_overdue_incidents,
+            avg_resolution_time_days,
+        };
+    });
 }
 
 // get incident details
-export async function getIncidentDetails (): Promise<Incident[]> {
+export async function getIncidentDetails(): Promise<Incident[]> {
     return incidents;
 }
 
 // get assigned handler from id
-export async function getHandler (id: number) {
-    return users.filter(({id}) => id === id);
+export async function getHandler(id: number) {
+    return users.filter(({ id }) => id === id);
 }

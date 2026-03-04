@@ -38,12 +38,11 @@ export default async function ReportingPage() {
 
       {/* Admin notice */}
       {page && (
-        <div className="bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-400 dark:border-blue-600 p-4 mb-6 rounded-lg">
-          <p className="text-black dark:text-white text-sm">
-            These are the currently configured reporting page details. To update them, click the{" "}
-            <span className="font-semibold">Configure Reporting Page</span> button above.
-          </p>
-        </div>
+        <p className="text-black dark:text-white text-sm my-4">
+          These are the currently configured reporting page details. To update them, click the{" "}
+          <span className="font-semibold">Configure Reporting Page</span> button above.
+        </p>
+
       )}
 
       {/* Reporting page details */}
@@ -53,7 +52,7 @@ export default async function ReportingPage() {
             <h2 className="text-2xl font-semibold text-black dark:text-white">{page.title}</h2>
             <p className="text-black/70 dark:text-white/70">{page.introContent}</p>
 
-            
+
             {page.policyUrl && (
               <div className="mt-4">
                 <span className="font-semibold text-black dark:text-white">Policy URL: </span>
