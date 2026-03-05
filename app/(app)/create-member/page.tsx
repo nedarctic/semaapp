@@ -15,10 +15,10 @@ export default function CreateMmeber() {
     return (
         <main className="min-h-screen w-full">
             <section className="flex flex-col dark:bg-black bg-white justify-center items-center min-h-screen">
-                <div className="flex flex-row items-center justify-center gap-8 p-6 w-full">
+                <div className="flex flex-row items-stretch justify-center gap-8 p-6 w-full h-full">
 
                     {/* Left Side Form */}
-                    <div className="flex flex-col w-full lg:w-1/2 justify-center items-start h-screen">
+                    <div className="flex-1 flex-col w-full lg:w-1/2 justify-center items-start">
                         <div className="flex flex-col justify-start items-start w-full p-10">
                             <form action={formAction} className="w-full flex flex-col gap-6 bg-white dark:bg-black p-8 rounded-xl shadow-md  border-2 border-black dark:border-white">
 
@@ -67,6 +67,24 @@ export default function CreateMmeber() {
                                     />
                                 </div>
 
+                                <div className="flex flex-col gap-2">
+                                    <label
+                                        htmlFor="role"
+                                        className="text-sm font-medium text-black dark:text-white"
+                                    >
+                                        Role
+                                    </label>
+                                    <select
+                                        name="role"
+                                        required
+                                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                                    >
+                                        <option className="text-black font-bold" value="">Select the team member's role</option>
+                                        <option className="text-black">Admin</option>
+                                        <option className="text-black">Handler</option>
+                                    </select>
+                                </div>
+
                                 {/* Password */}
                                 <div className="flex flex-col gap-2">
                                     <label
@@ -110,7 +128,7 @@ export default function CreateMmeber() {
                                     type="submit"
                                     className="mt-4 py-2 rounded-lg bg-black text-white dark:bg-white dark:text-black font-medium hover:opacity-90 transition"
                                 >
-                                    {pending ? "Creating..." :"Create Member"}
+                                    {pending ? "Creating..." : "Create Member"}
                                 </button>
 
                             </form>
@@ -118,8 +136,8 @@ export default function CreateMmeber() {
                     </div>
 
                     {/* Right Side Panel */}
-                    <div className="dark:bg-white bg-black w-full lg:w-1/2 border-2 border-black dark:border-white rounded-xl hidden md:flex flex-col justify-between h-screen items-start m-10">
-                        <div className="flex flex-col justify-between items-start min-h-screen p-10">
+                    <div className="flex-1 dark:bg-white bg-black w-full lg:w-1/2 border-2 border-black dark:border-white rounded-xl hidden md:flex flex-col justify-between min-h-screen items-start m-10">
+                        <div className="flex flex-col justify-between items-start h-full p-10">
                             <h1 className="text-white dark:text-black text-4xl md:text-6xl font-light">Add a New Member to Your Team
                             </h1>
                             <h1 className="text-white dark:text-black text-xl font-light">

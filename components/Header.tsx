@@ -44,7 +44,7 @@ export function Header() {
           {session && (
             <button
               onClick={() => signOut({ callbackUrl: "/signin" })}
-              className="px-4 py-2 bg-dark dark:bg-white text-white dark:text-black font-bold text-sm rounded-full flex flex-col items-center justify-center"
+              className="px-4 py-2 bg-white text-black font-bold text-sm rounded-full flex flex-col items-center justify-center"
             >
               Logout
             </button>

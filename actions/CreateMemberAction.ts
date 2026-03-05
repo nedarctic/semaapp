@@ -2,12 +2,15 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { users } from "@/db/schema";
+import { users, userRoleEnum } from "@/db/schema";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import bcrypt from 'bcrypt';
+import { InferEnum } from "drizzle-orm";
+
+export type Role = InferEnum<typeof userRoleEnum>;
 
 type CreateMemberState = {
     success?: boolean;
@@ -33,6 +36,7 @@ async function getCompanyId(id: string) {
 const CreateMemberSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.email({ error: "Email is required" }),
+    role: z.enum(["Admin", "Handler"]),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Password confirmation is required")
 }).refine((data) => data.password === data.confirmPassword, {
@@ -46,6 +50,7 @@ export async function CreateMemberAction(prevState: CreateMemberState, formData:
     const parsedData = CreateMemberSchema.safeParse({
         name: formData.get("name")?.toString(),
         email: formData.get("email")?.toString(),
+        role: formData.get("role"),
         password: formData.get("password")?.toString(),
         confirmPassword: formData.get("confirmPassword")?.toString(),
     });
@@ -68,8 +73,9 @@ export async function CreateMemberAction(prevState: CreateMemberState, formData:
 
     const payload = {
         name: parsedData.data.name,
-        email: parsedData.data.email,
+        email: parsedData.data.email,        
         password: hashedPassword,
+        role: parsedData.data.role,
         companyId: companyId
     };
 

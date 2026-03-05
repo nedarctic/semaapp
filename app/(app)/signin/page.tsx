@@ -25,7 +25,7 @@ export default function SignIn() {
 
         console.log("Sign in response:", response);
 
-        if(response?.error){
+        if (response?.error) {
             setError("Invalid email or password");
             console.log("Error:", error);
             return;
@@ -37,11 +37,14 @@ export default function SignIn() {
     return (
         <main className="min-h-screen w-full">
             <section className="flex flex-col dark:bg-black bg-white justify-center items-center min-h-screen">
-                <div className="flex flex-row items-center justify-center gap-8 p-6 w-full">
+                <div className="flex flex-row items-stretch justify-center gap-8 p-6 w-full h-full">
 
                     {/* Left Side Panel */}
-                    <div className="dark:bg-white bg-black w-full lg:w-1/2 border-2 border-black dark:border-white rounded-xl hidden md:flex flex-col justify-between h-screen items-start m-10">
-                        <div className="flex flex-col justify-between items-start min-h-screen p-10">
+                    <div className="flex-1 dark:bg-white bg-black w-full 
+                    lg:w-1/2 border-2 border-black dark:border-white rounded-xl 
+                    hidden md:flex flex-col justify-between min-h-100 items-start m-4">
+
+                        <div className="flex flex-col justify-between items-start h-full p-10">
                             <div className="flex flex-col gap-4">
                                 <h1 className="text-white dark:text-black text-4xl md:text-6xl font-light">
                                     Welcome Back
@@ -58,9 +61,9 @@ export default function SignIn() {
                     </div>
 
                     {/* Right Side Form */}
-                    <div className="flex flex-col w-full lg:w-1/2 justify-center items-start h-screen">
+                    <div className="flex-1 flex-col w-full lg:w-1/2 justify-center items-start full m-4 min-h-100">
                         <div className="flex flex-col justify-start items-start w-full p-10">
-                            <form onSubmit={handleSignIn} className="w-full flex flex-col gap-6 bg-gray-100 dark:bg-black p-8 rounded-xl shadow-md">
+                            <form onSubmit={handleSignIn} className="w-full flex flex-col gap-6 bg-white dark:bg-black p-8 rounded-xl h-full">
 
                                 <div className="flex flex-col gap-2">
                                     <h2 className="text-3xl font-semibold text-black dark:text-white">

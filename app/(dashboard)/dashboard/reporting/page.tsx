@@ -60,7 +60,7 @@ export default async function ReportingPage() {
                   href={page.policyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 underline"
+                  className="text-black-600 dark:text-black-400 underline"
                 >
                   {page.policyUrl}
                 </Link>
@@ -68,13 +68,13 @@ export default async function ReportingPage() {
             )}
 
             {page.reportingPageUrl && (
-              <div>
+              <div className="mt-4">
                 <span className="font-semibold text-black dark:text-white">Reporting URL: </span>
                 <Link
                   href={`http://localhost:3000/whistleblowing/${page.reportingPageUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 underline"
+                  className="text-black-600 dark:text-black-400 underline"
                 >
                   {`http://localhost:3000/whistleblowing/${page.reportingPageUrl}`}
                 </Link>

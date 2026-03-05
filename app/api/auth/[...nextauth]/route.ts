@@ -19,7 +19,7 @@ export const authOptions: AuthOptions = {
 
                 const user = await db.select().from(users).where(eq(users.email, credentials.email)).then(res => res[0])
 
-                if (!user) return null;
+                if (!user || user.role == "Handler") return null;
 
                 const passwordMatch = await bcrypt.compare(credentials.password, user.password!);
 

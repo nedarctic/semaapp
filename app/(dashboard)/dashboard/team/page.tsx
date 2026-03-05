@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { users, incidents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { InferSelectModel } from "drizzle-orm";
+import { BreadCrumb } from "@/components/BreadCrumb";
 
 type User = InferSelectModel<typeof users>
 
@@ -82,7 +83,7 @@ async function getTeamAdmins() {
   }
 }
 
-async function getTeamHandlers() {
+export async function getTeamHandlers() {
   try {
     const members = (await getTeamMembers()).data;
 
@@ -128,6 +129,7 @@ export async function getTeamHandlersIncidentsWithDetails() {
 
   // 2. create map with handler ids as keys
   const handlerDetails: Map<string, {
+    id: string;
     name: string | null;
     email: string;
     totalAssignedIncidents: number;
@@ -162,6 +164,7 @@ export async function getTeamHandlersIncidentsWithDetails() {
     const { name, email } = await getHandlerNameAndEmail(id);
 
     handlerDetails.set(id, {
+      id: id,
       name: name,
       email: email,
       totalAssignedIncidents: incidents.length,
@@ -191,7 +194,7 @@ export async function getTeamHandlersIncidentsWithDetails() {
 
       return acc + (closed - opened);
     }, 0);
-    const timePerIncident = totalTime / incidents.length;
+    const timePerIncident = totalTime / closedIncidents.size;
     avgResolutionTime = Math.round(timePerIncident / (1000 * 60 * 60 * 24))
     handlerDetails.get(id)!.avgResolutionTime = avgResolutionTime;
   }
@@ -211,7 +214,10 @@ export default async function TeamPage() {
   const teamAdmins = await getTeamAdmins();
   const teamHandlersDetails = await getTeamHandlersIncidentsWithDetails();
 
-  if (!teamHandlersDetails) {
+  const crumbs: Map<string, string> = new Map();
+  crumbs.set(`/dashboard/team`, "Team");
+
+  if (!teamHandlersDetails || !teamAdmins?.data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
         <main className="flex min-h-screen w-full flex-col items-start justify-start p-10 bg-white dark:bg-black">
@@ -222,10 +228,7 @@ export default async function TeamPage() {
           </p>
 
           {/* breadcrumb */}
-          <div className="flex items-center py-4">
-            <FaHome size={20} className="text-gray-400 mr-2" />
-            <p className="text-gray-400 text-xl"> / Team</p>
-          </div>
+          <BreadCrumb crumbs={crumbs} />
 
           <div className="py-8">
             <p className="text-sm font-bold">No Team Yet. Begin by creating a new member for your team.</p>
@@ -263,17 +266,22 @@ export default async function TeamPage() {
         </p>
 
         {/* breadcrumb */}
-        <div className="flex items-center py-4">
-          <FaHome size={20} className="text-gray-400 mr-2" />
-          <p className="text-gray-400 text-xl"> / Team</p>
-        </div>
+        <BreadCrumb crumbs={crumbs} />
 
         {/* create new user */}
-        <Link href={"/create-member"} className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-bold flex flex-row items-center justify-center">
+        <Link href={"/create-member"} className="mt-2 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-bold flex flex-row items-center justify-center">
           <TiUserAdd size={20} className="text-white dark:text-black mr-2" />Add new member</Link>
 
+        <h1 className="text-black dark:text-white text-3xl font-extrabold mt-10 mb-2">
+          Handlers
+        </h1>
+
+        <p className="text-xs text-gray-500 max-w-xl">
+          Click on any row to view and manage team handler.
+        </p>
+
         {/* handlers table */}
-        <table className="w-full mt-6 border border-black dark:border-white">
+        <table className="w-full mt-4 border border-black dark:border-white">
           <thead>
             <tr>
               <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
@@ -298,28 +306,90 @@ export default async function TeamPage() {
           </thead>
 
           <tbody>
-            {newHandlers.map(handler => (
-              <tr key={handler.name}>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.name}
-                </td>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.email}
-                </td>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.totalAssignedIncidents}
-                </td>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.totalOpenIncidents}
-                </td>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.overdueIncidents}
-                </td>
-                <td className="border border-black dark:border-white px-4 py-2 text-black dark:text-white text-sm">
-                  {handler.avgResolutionTime ?? "N/A"}
-                </td>
-              </tr>
-            ))}
+            {newHandlers.map((handler) => {
+              const href = `/dashboard/team/${handler.id}`;
+
+              return (
+                <tr
+                  key={handler.id}
+                  className="hover:bg-gray-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                >
+                  {[
+                    handler.name,
+                    handler.email,
+                    handler.totalAssignedIncidents,
+                    handler.totalOpenIncidents,
+                    handler.overdueIncidents,
+                    handler.avgResolutionTime ?? "N/A",
+                  ].map((value, i) => (
+                    <td
+                      key={i}
+                      className="border border-black dark:border-white px-4 py-2 text-sm"
+                    >
+                      <Link
+                        href={href}
+                        className="block w-full h-full text-black dark:text-white"
+                      >
+                        {value}
+                      </Link>
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* admins table */}
+        <h1 className="text-black dark:text-white text-3xl font-extrabold mt-10 mb-2">
+          Admins
+        </h1>
+
+        <p className="text-xs text-gray-500 max-w-xl">
+          Click on any row to view and manage team admin.
+        </p>
+
+        <table className="w-full mt-4 border border-black dark:border-white">
+          <thead>
+            <tr>
+              <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
+                Admin
+              </th>
+              <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
+                Email
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {teamAdmins.data.map((admin) => {
+              const href = `/dashboard/team/${admin.id}`;
+
+
+              return (
+                <tr
+                  key={admin.id}
+                  className="hover:bg-gray-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                >
+                  {[
+                    admin.name,
+                    admin.email,
+                  ].map((value, i) => (
+                    <td
+                      key={i}
+                      className="border border-black dark:border-white px-4 py-2 text-sm"
+                    >
+                      <Link
+                        href={href}
+                        className="block w-full h-full text-black dark:text-white"
+                      >
+                        {value}
+                      </Link>
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
