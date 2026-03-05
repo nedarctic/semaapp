@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useTransition, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { sendMessageAction } from '@/actions/SendMessage';
 import { InferSelectModel } from 'drizzle-orm';
 import { messages } from '@/db/schema';
-import { useRouter } from 'next/navigation';
 
 type Message = InferSelectModel<typeof messages>;
 
-export default function IncidentChat({
+export default function IncidentHandlerChat({
   incidentId,
   incidentName,
   senderId,
@@ -21,7 +21,8 @@ export default function IncidentChat({
 }) {
 
   const router = useRouter();
-  const senderType = "Reporter";
+
+  const senderType = "Handler";
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<{ success?: boolean; error?: string }>({ success: false, error: undefined });
   const [message, setMessage] = useState<string>();
@@ -38,8 +39,9 @@ export default function IncidentChat({
     startTransition(async () => {
       try {
         await sendMessageAction(incidentId, senderId, message!, senderType);
+
         setState({ success: true });
-        router.refresh()
+        router.refresh();
 
       } catch (error) {
         setState({ error: error instanceof Error ? error.message : "Unknown error" });
@@ -56,13 +58,12 @@ export default function IncidentChat({
         </h2>
 
         <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base font-light leading-relaxed">
-          This space enables confidential communication between you and authorized
-          handlers assigned to this incident. All messages are logged and auditable.
+          This space enables confidential communication between you and this incident's reporter. All messages are logged and auditable.
         </p>
       </header>
 
-      <div className="flex flex-col items-start justify-center h-screen w-full p-6">
-        <div className="border-2 border-black dark:border-white rounded-xl flex flex-col items-start justify-between lg:w-1/2 w-full min-h-125 p-8 lg:p-10 space-y-3">
+      <div className="flex flex-col items-center justify-center h-screen w-full p-6">
+        <div className="border-2 border-black dark:border-white rounded-xl flex flex-col items-start justify-between lg:w-2/3 w-full min-h-125 p-8 lg:p-10 space-y-3">
           <h1 className="text-2xl text-black dark:text-white">{incidentName} Chat Room</h1>
           <div className="overflow-y-auto h-80 w-full">
             <ul className="text-black font-normal text-sm dark:text-white space-y-2 mt-2">
@@ -72,9 +73,9 @@ export default function IncidentChat({
               })}
             </ul>
           </div>
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col items-start justify-start space-y-2">
+          <form onSubmit={handleSubmit} className="mt-4 flex flex-col items-start justify-start space-y-2 w-full">
 
-            <input name="content" onChange={e => setMessage(e.target.value)} required placeholder='Enter message' className="px-4 py-2 rounded-md border-2 border-black dark:border-white sm:w-full" />
+            <input name="content" onChange={e => setMessage(e.target.value)} required placeholder='Enter message' className="px-4 py-2 rounded-md border-2 border-black dark:border-white w-full" />
             {state.error && (<p className="text-red-600 text-sm font-normal">{state.error}</p>)}
             {/* {state.success && (<p className="text-green-600 text-sm font-normal">Sent successfully!</p>)} */}
             <button type="submit" className="rounded-full px-4 py-2 text-md font-semibold text-white bg-black dark:bg-white dark:text-black flex flex-col items-center justify-center">{isPending ? "Sending..." : "Send message"}</button>

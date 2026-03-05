@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
-export default function TrackIncidentPage() {
-  const [incidentId, setIncidentId] = useState("");
-  const [secretCode, setSecretCode] = useState("");
+export default function HandlerLoginPage() {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,21 +16,21 @@ export default function TrackIncidentPage() {
     setLoading(true);
     setError(null);
 
-    const res = await signIn("incident-access", {
-      incidentId,
-      secretCode,
+    const res = await signIn("handler-access", {
+      email,
+      password,
       redirect: false,
     });
 
     if (res?.error) {
       // Intentionally vague for security
-      setError("Invalid Incident ID or Secret Code.");
+      setError("Invalid email or password.");
       setLoading(false);
       return;
     }
 
     // Successful login → redirect to tracking page
-    window.location.href = "track/incident";
+    window.location.href = "/handler/incidents";
   }
 
   return (
@@ -38,11 +40,10 @@ export default function TrackIncidentPage() {
         {/* Header */}
         <header className="space-y-4">
           <h1 className="text-black dark:text-white text-3xl md:text-5xl font-light">
-            Track an Incident
+            Manage an incident
           </h1>
           <p className="text-black/70 dark:text-white/70 text-base leading-relaxed">
-            Enter your Incident ID and secret code to securely track the status
-            of your report.
+            Enter your email and password to continue managing your assigned report.
           </p>
         </header>
 
@@ -53,13 +54,13 @@ export default function TrackIncidentPage() {
         >
           <div className="space-y-4">
             <label className="block text-black dark:text-white font-semibold text-sm">
-              Incident ID
+              Email
             </label>
             <input
               type="text"
-              value={incidentId}
-              onChange={(e) => setIncidentId(e.target.value)}
-              placeholder="e.g. INC-AB3K9Q"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. you@email.com"
               required
               className="w-full border-2 border-black dark:border-white rounded-xl px-4 py-3 bg-transparent text-black dark:text-white"
             />
@@ -67,13 +68,13 @@ export default function TrackIncidentPage() {
 
           <div className="space-y-4">
             <label className="block text-black dark:text-white font-semibold text-sm">
-              Secret Code
+              Password
             </label>
             <input
               type="password"
-              value={secretCode}
-              onChange={(e) => setSecretCode(e.target.value)}
-              placeholder="Enter the secret code you received"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
               required
               className="w-full border-2 border-black dark:border-white rounded-xl px-4 py-3 bg-transparent text-black dark:text-white"
             />
@@ -90,14 +91,9 @@ export default function TrackIncidentPage() {
             disabled={loading}
             className="w-full rounded-full bg-black text-white dark:bg-white dark:text-black px-6 py-4 font-semibold hover:opacity-90 transition disabled:opacity-50"
           >
-            {loading ? "Verifying…" : "Track incident"}
+            {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
-
-        {/* Helper text */}
-        <p className="text-center text-black/60 dark:text-white/60 text-sm">
-          Lost your secret code? For security reasons, it cannot be recovered.
-        </p>
       </div>
     </main>
   );

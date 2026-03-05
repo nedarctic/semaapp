@@ -1,7 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
-import { incidents, attachments } from "@/db/schema";
+import { incidents, attachments, messages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { InferSelectModel } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -21,6 +21,12 @@ export async function getAttachments (incidentId: unknown) {
     return data;
 }
 
+export async function getInitialMessages (incidentId: string) {
+    const initialMessages = await db.select().from(messages).where(eq(messages.incidentId, incidentId));
+
+    return initialMessages;
+}
+
 export default async function TrackIncidentPage() {
     const session = await getServerSession(authOptions);
     if (!session) redirect("https://www.semafacts.com");
@@ -28,6 +34,10 @@ export default async function TrackIncidentPage() {
     const incidentId: unknown = session!.incidentId;
     const [incident] = await getIncident(incidentId);
     const attachments = await getAttachments(incidentId);
+    const senderId = incident.reporterId;
+    const senderType = "Reporter";
+    const incidentName = incident.incidentIdDisplay;
+    const initialMessages = await getInitialMessages(incident.id);
 
     console.log("Session details", session);
     console.log("Incident Details:", incident);
@@ -40,7 +50,12 @@ export default async function TrackIncidentPage() {
 
                     <IncidentOverview incident={incident} />
 
-                    <IncidentChat incidentId={incident.id} />
+                    <IncidentChat 
+                    incidentId={incident.id} 
+                    incidentName={incidentName}
+                    initialMessages={initialMessages}
+                    senderId={senderId}
+                    />
 
                     <IncidentEvidence attachments={attachments} />
 

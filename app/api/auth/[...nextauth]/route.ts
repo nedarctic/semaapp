@@ -33,6 +33,31 @@ export const authOptions: AuthOptions = {
             },
         }),
         CredentialsProvider({
+            id: "handler-access",
+            name: "Handler Access",
+            credentials: {
+                email: { label: "email", type: "email" },
+                password: { label: "password", type: "password" },
+            },
+            async authorize(credentials) {
+                if (!credentials?.email || !credentials.password) return null;
+
+                const user = await db.select().from(users).where(eq(users.email, credentials.email)).then(res => res[0])
+
+                if (!user || user.role != "Handler") return null;
+
+                const passwordMatch = await bcrypt.compare(credentials.password, user.password!);
+
+                if (!passwordMatch) return null;
+
+                return {
+                    id: user.id.toString(),
+                    email: user.email,
+                    name: user.name,
+                };
+            },
+        }),
+        CredentialsProvider({
             id: "incident-access",
             name: "Incident Access",
             credentials: {

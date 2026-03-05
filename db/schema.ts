@@ -116,6 +116,7 @@ export const messages = pgTable("messages", {
     id: uuid("id").defaultRandom().primaryKey(),
     incidentId: uuid("incident_id").notNull(),
     senderType: senderTypeEnum("sender_type").notNull(),
+    senderId: uuid("sender_id").notNull(),
     content: text("content").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
