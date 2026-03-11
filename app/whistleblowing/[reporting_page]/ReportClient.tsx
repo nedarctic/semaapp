@@ -2,17 +2,30 @@
 
 import Link from "next/link";
 
-export default function ReportClient({reportingPageLink}: {reportingPageLink?: string}) {
+export default function ReportClient({
+  reportingPageLink,
+  companyId,
+  title,
+  introContent,
+  policyUrl,
+  reportingPageUrl
+}: {
+  reportingPageLink?: string;
+  companyId: string;
+  title: string | null;
+  introContent: string | null;
+  policyUrl: string | null;
+  reportingPageUrl: string | null;
+}) {
   return (
     <main className="min-h-screen w-full bg-white dark:bg-black">
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col items-center justify-center text-center px-6">
         <h1 className="text-black dark:text-white text-4xl md:text-6xl lg:text-8xl font-light">
-          Speak Up Safely
+          {title}
         </h1>
         <p className="mt-6 max-w-2xl text-black/80 dark:text-white/80 text-lg md:text-xl leading-relaxed">
-          A secure and confidential way to report misconduct, abuse, fraud, or
-          unethical behavior — without fear of retaliation.
+          {introContent}
         </p>
         <p className="mt-4 max-w-xl text-black/60 dark:text-white/60 text-sm md:text-base">
           Reports can be submitted anonymously and are handled by authorized
@@ -23,6 +36,7 @@ export default function ReportClient({reportingPageLink}: {reportingPageLink?: s
       {/* Action Cards */}
       <section className="flex flex-col items-center justify-center w-full px-6 py-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+
           {/* Report Card */}
           <div className="flex flex-col justify-between border-2 border-black dark:border-white rounded-3xl p-8 min-h-[320px]">
             <div className="space-y-4">

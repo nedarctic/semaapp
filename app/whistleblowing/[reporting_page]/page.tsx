@@ -3,26 +3,55 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { reportingPages } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { InferSelectModel } from "drizzle-orm";
+import { notFound } from "next/navigation";
 
-export async function getReportingPageData (reporting_page: string) {
+type ReportingPageDetails = InferSelectModel<typeof reportingPages>;
+
+type ReportingPageReturnType = {
+    success?: boolean;
+    error?: string;
+    data?: ReportingPageDetails;
+} | null;
+
+export async function getReportingPageData(reporting_page: string): Promise<ReportingPageReturnType> {
     try {
-        const data = await db.select().from(reportingPages).where(eq(reportingPages.reportingPageUrl, reporting_page));
-        if (data.length > 0) return {success: true, data: data}
+        const data = await db.select().from(reportingPages).where(eq(reportingPages.reportingPageUrl, reporting_page)).then(res => res[0]);
+        if (data) return { success: true, data: data }
         return null;
 
     } catch (error) {
-        return {error: error instanceof Error ? error.message : "Unknown error"}
+        return { error: error instanceof Error ? error.message : "Unknown error" }
     }
 }
 
-export default async function ({params}: {params: Promise<{reporting_page: string}>}) {;
+export default async function ({ params }: { params: Promise<{ reporting_page: string }> }) {
+    ;
 
-    const {reporting_page} = await params;
+    const { reporting_page } = await params;
 
     const res = await getReportingPageData(reporting_page);
+
+    if (!res?.data) return notFound();
+
     console.log("Reporting page result:", res);
 
-    if(!res) redirect("https://www.semafacts.com")
+    const {
+        companyId,
+        title,
+        introContent,
+        policyUrl,
+        reportingPageUrl
+     } = res.data;
 
-    return <ReportClient reportingPageLink={reporting_page}/>
+    return (
+        <ReportClient
+            companyId={companyId}
+            title={title}
+            introContent={introContent}
+            policyUrl={policyUrl}
+            reportingPageUrl={reportingPageUrl}
+            reportingPageLink={reporting_page}
+        />
+    );
 }

@@ -1,11 +1,28 @@
 import { FaHome } from "react-icons/fa";
 import { getIncidentDetails } from "@/lib/helpers";
-import type { Incident } from "@/lib/types"
 import { getHandler } from "@/lib/helpers";
-          
+import { db } from "@/lib/db";
+import { incidents } from "@/db/schema";
+import { getServerSession } from "next-auth";
+import { getCompanyId } from "../team/page";
+import { eq } from "drizzle-orm";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { notFound } from "next/navigation";
+import { InferSelectModel } from "drizzle-orm";
+import Link from "next/link";
+
+type Incident = InferSelectModel<typeof incidents>;
+
+export async function getIncidents(companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  return data;
+}
+
 export default async function IncidentPage() {
 
-  const incidents: Incident[] = await getIncidentDetails();
+    const data = await getCompanyId();
+    const companyId = data.data; 
+    const incidents: Incident[] = await getIncidents(companyId!);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
@@ -33,18 +50,18 @@ export default async function IncidentPage() {
             </tr>
           </thead>
           <tbody>
-            {incidents.map(({ id, category, company_id, created_at, reporter_type, assigned_handler_user_id, description, location, status, deadline_at, closed_at }) => {
-              
+            {incidents.map(({ id, category, companyId, createdAt, reporterType, assignedHandlerId, description, location, status, deadlineAt, closedAt }) => {
+
               return (
                 <tr key={id}>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{id}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{category}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{reporter_type}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{description}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{location}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{status}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{deadline_at}</td>
-                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm">{created_at}</td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{id}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{category}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{reporterType}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{description}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{location}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{status}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{deadlineAt ? deadlineAt.toLocaleDateString("en") : ""}</Link></td>
+                  <td className="text-black dark:text-white border border-black dark:border-white px-2 py-2 text-start text-sm"><Link className="block w-full h-full text-black dark:text-white" href={`/dashboard/incidents/${id}`}>{createdAt.toLocaleDateString("en")}</Link></td>
                 </tr>
               );
             })}

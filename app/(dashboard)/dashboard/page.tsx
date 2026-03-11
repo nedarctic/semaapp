@@ -11,7 +11,6 @@ import {
   getOverdueIncidents,
   getUnassignedIncidents,
   getAllHandlersDetails,
-  getClosedIncidentsByCategories,
 } from '@/lib/helpers'
 import { StatusChart } from "@/components/StatusChart";
 import { KpiCard } from "@/components/KpiCard";
@@ -21,16 +20,56 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 
+import { db } from "@/lib/db";
+import { incidents } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { getCompanyId } from "./team/page";
+import { getIncidents } from "./incidents/page";
+
+export async function totalIncidents (companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  return data.length;
+}
+
+export async function avgResolutionTime(companyId: string): Promise<number> {
+
+  const incidents = await getIncidents(companyId);
+
+    // get closed incidents
+    const closed = incidents.filter(({ closedAt }) => closedAt !== null);
+
+    if (closed.length === 0) return 0;
+
+    // get time taken to resolve all incidents
+    const total_resoulution_time = closed.reduce((sum, incident) => {
+        const created = new Date(incident.createdAt).getTime();
+        const closed = new Date(incident.closedAt!).getTime();
+        return sum + (closed - created);
+    }, 0);
+
+    // divide total resolution time by total resolved cases
+    const total_avg_microsecs = total_resoulution_time / closed.length;
+
+    // convert to days and round
+    return Math.round(total_avg_microsecs / (1000 * 60 * 60 * 24));
+
+}
+
+
 export default async function Home() {
 
   const session = await getServerSession(authOptions);
 
-  if(!session){
+  if(!session || session.type !== "admin"){
     redirect("/signin");
   }
 
-  const total_incidents = getTotalIncidents();
-  const avg_resolution_time = getAvgResolutionTime();
+  console.log("Admin session details:", session)
+
+  const companyId = await getCompanyId();
+
+  const total_incidents = await totalIncidents(companyId?.data!);
+  const avg_resolution_time = await avgResolutionTime(companyId?.data!);
   const total_incidents_due_soon = getTotalIncidentsDueSoon(3);
   const total_open_incidents = getTotalOpenIncidents();
   const total_overdue_incidents = getTotalOverdueIncidents();

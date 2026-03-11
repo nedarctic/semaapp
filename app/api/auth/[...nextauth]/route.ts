@@ -4,7 +4,7 @@ import { users, incidents, secretCodes } from "@/db/schema";
 import bcrypt from 'bcrypt';
 import { eq } from "drizzle-orm";
 import CredentialsProvider from "next-auth/providers/credentials";
-import argon2 from "argon2";
+import argon2 from 'argon2';
 
 export const authOptions: AuthOptions = {
     providers: [
@@ -29,6 +29,7 @@ export const authOptions: AuthOptions = {
                     id: user.id.toString(),
                     email: user.email,
                     name: user.name,
+                    type: "admin",
                 };
             },
         }),
@@ -36,24 +37,26 @@ export const authOptions: AuthOptions = {
             id: "handler-access",
             name: "Handler Access",
             credentials: {
-                email: { label: "email", type: "email" },
+                email: { label: "email", type: "text" },
                 password: { label: "password", type: "password" },
             },
             async authorize(credentials) {
+
                 if (!credentials?.email || !credentials.password) return null;
 
-                const user = await db.select().from(users).where(eq(users.email, credentials.email)).then(res => res[0])
+                const user = await db.select().from(users).where(eq(users.email, credentials.email)).then(res => res[0]);
 
-                if (!user || user.role != "Handler") return null;
+                if (!user || user.role !== "Handler") return null;
 
                 const passwordMatch = await bcrypt.compare(credentials.password, user.password!);
 
                 if (!passwordMatch) return null;
 
                 return {
-                    id: user.id.toString(),
+                    id: user.id,
                     email: user.email,
                     name: user.name,
+                    type: "handler",
                 };
             },
         }),
@@ -103,30 +106,37 @@ export const authOptions: AuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ user, token }) {
-            if (user) {
-                token.id = user.id;
-                token.type = (user as any).type ?? "user";
 
-                if (token.type === "incident") {
-                    token.incidentId = (user as any).incidentId;
-                    token.incidentIdDisplay = (user as any).incidentIdDisplay;
-                }
+        async jwt({ user, token }) {
+
+            if (user && user.type === "admin") {
+                token.id = user.id;
+                token.type = user.type;
             }
+
+            if (user && user.type === "handler") {
+                token.id = user.id;
+                token.type = user.type;
+            } 
+
+            if (user && user.type === "incident") {
+                token.id = user.id;
+                token.type = user.type;
+                token.incidentId = user.incidentId;
+                token.incidentIdDisplay = user.incidentIdDisplay;
+            }
+
+
             return token;
         },
 
         async session({ session, token }) {
 
-
             if (token && session.user) {
                 session.user.id = token.id;
-                session.type = token.type;
-
-                if (token.type == "incident") {
-                    session.incidentId = token.incidentId;
-                    session.incidentIdDisplay = token.incidentIdDisplay;
-                }
+                session.type = (token as any).type;
+                session.incidentId = (token as any).incidentId;
+                session.incidentIdDisplay = (token as any).incidentIdDisplay;
             }
 
             return session;
@@ -134,10 +144,7 @@ export const authOptions: AuthOptions = {
     },
     session: {
         strategy: "jwt",
-    },
-    pages: {
-        signIn: "./signin"
-    },
+    }
 }
 
 const handler = NextAuth(authOptions);

@@ -39,6 +39,7 @@ export default function IncidentChat({
       try {
         await sendMessageAction(incidentId, senderId, message!, senderType);
         setState({ success: true });
+        setMessage(undefined);
         router.refresh()
 
       } catch (error) {
@@ -68,13 +69,13 @@ export default function IncidentChat({
             <ul className="text-black font-normal text-sm dark:text-white space-y-2 mt-2">
               {messages.map((msg) => {
 
-                return <li key={msg.id}><span className="bg-black text-white font-bold text-[12px] m-1 p-1 rounded-sm">{senderType}</span>: {msg.content}</li>
+                return <li key={msg.id}><span className="bg-black text-white font-bold text-[12px] m-1 p-1 rounded-sm">{msg.senderType}</span>: {msg.content}</li>
               })}
             </ul>
           </div>
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col items-start justify-start space-y-2">
+          <form onSubmit={handleSubmit} className="mt-4 flex flex-col items-start justify-start space-y-2 w-full">
 
-            <input name="content" onChange={e => setMessage(e.target.value)} required placeholder='Enter message' className="px-4 py-2 rounded-md border-2 border-black dark:border-white sm:w-full" />
+            <input name="content" value={message || ""} onChange={e => setMessage(e.target.value)} required placeholder='Enter message' className="px-4 py-2 rounded-md border-2 border-black dark:border-white sm:w-full" />
             {state.error && (<p className="text-red-600 text-sm font-normal">{state.error}</p>)}
             {/* {state.success && (<p className="text-green-600 text-sm font-normal">Sent successfully!</p>)} */}
             <button type="submit" className="rounded-full px-4 py-2 text-md font-semibold text-white bg-black dark:bg-white dark:text-black flex flex-col items-center justify-center">{isPending ? "Sending..." : "Send message"}</button>

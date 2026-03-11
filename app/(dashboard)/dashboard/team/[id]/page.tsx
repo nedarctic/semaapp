@@ -95,6 +95,7 @@ export async function getHandlerDetails(id: string): Promise<{
 }
 
 export default async function TeamMember({ params }: { params: Promise<{ id: string }> }) {
+
     const { id } = await params;
 
     const teamMember = await getTeamMemberDetails(id);

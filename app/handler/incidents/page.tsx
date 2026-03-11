@@ -13,8 +13,8 @@ export async function getHandler(handlerId: string) {
 
 export default async function HandlerIncidentsPage() {
     const session = await getServerSession(authOptions);
-    if (!session) redirect("/handler");
-    console.log("Session:", session);
+    if (!session || session.type !== "handler") redirect("/handler");
+    console.log("Handler session details:", session);
     
     const handler = await getHandler(session.user.id);
 
@@ -27,7 +27,7 @@ export default async function HandlerIncidentsPage() {
         <div className="flex min-h-screen bg-white dark:bg-black p-10">
             <main className="w-full max-w-6xl mx-auto flex flex-col gap-16">
 
-                <p className="text-md font-bold">Welcome, {handler.name}</p>
+                <p className="text-md font-bold">Welcome, {handler.name}!</p>
 
                 {/* Header */}
                 <section className="flex flex-col gap-4">

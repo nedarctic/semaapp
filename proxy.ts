@@ -5,17 +5,19 @@ export default async function Proxy(
     req: NextRequest
 ) {
     const { pathname } = req.nextUrl;
+    const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET!
+    });
 
-    if (pathname.startsWith("/dashboard")) {
-        const token = await getToken({
-            req,
-            secret: process.env.NEXTAUTH_SECRET!
-        });
+    if (pathname.startsWith("/dashboard") && (!token || token.type !== "admin")) {
+        const signInUrl = new URL("/signin", req.url);
+        return NextResponse.redirect(signInUrl)
+    }
 
-        if(!token) {
-            const signInUrl = new URL("/signin", req.url);
-            return NextResponse.redirect(signInUrl)
-        }
+    if (pathname.startsWith("/handler/incidents") && (!token || token.type !== "handler")) {
+        const signInUrl = new URL("/handler", req.url);
+        return NextResponse.redirect(signInUrl)
     }
 
     return NextResponse.next();

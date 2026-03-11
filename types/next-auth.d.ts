@@ -2,9 +2,9 @@ import NextAuth, { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
     interface Session {
-        type: unknown;
-        incidentId: unknown;
-        incidentIdDisplay: unknown;
+        type: "admin" | "handler" | "incident";
+        incidentId?: string;
+        incidentIdDisplay?: string;
         user: {
             id: string;
         } & DefaultSession[user];
@@ -12,5 +12,8 @@ declare module "next-auth" {
 
     interface User {
         id: string;
+        type: "handler" | "admin" | "incident";
+        incidentId?: string;
+        incidentIdDisplay?: string;
     }
 }
