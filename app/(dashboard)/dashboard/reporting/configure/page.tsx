@@ -11,6 +11,8 @@ export default async function ReportingConfig () {
     const response = await getCompanyId();
     let companyId = response.data!;
 
+    console.log("Company ID:", companyId);
+
     // fetch the reporting page data related to it
     const reportingPageData = await db.select().from(reportingPages).where(eq(reportingPages.companyId, companyId))
 
