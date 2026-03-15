@@ -5,12 +5,13 @@ export default async function Proxy(
     req: NextRequest
 ) {
     const { pathname } = req.nextUrl;
+
     const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET!
     });
 
-    if (pathname.startsWith("/dashboard") && (!token || token.type !== "admin")) {
+    if ((pathname.startsWith("/dashboard") || pathname.startsWith('/create-member')) && (!token || token.type !== "admin")) {
         const signInUrl = new URL("/signin", req.url);
         return NextResponse.redirect(signInUrl)
     }

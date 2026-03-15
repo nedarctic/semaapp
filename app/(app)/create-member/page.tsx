@@ -79,9 +79,9 @@ export default function CreateMmeber() {
                                         required
                                         className="px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                                     >
-                                        <option className="text-black font-bold" value="">Select the team member's role</option>
-                                        <option className="text-black">Admin</option>
-                                        <option className="text-black">Handler</option>
+                                        <option className="text-black font-bold bg-white" value="">Select the team member's role</option>
+                                        <option className="text-black bg-white">Admin</option>
+                                        <option className="text-black bg-white">Handler</option>
                                     </select>
                                 </div>
 

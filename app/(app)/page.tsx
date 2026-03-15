@@ -1,7 +1,16 @@
 import { Capability } from '@/components/Capability';
 import Link from 'next/link';
+import bcrypt from 'bcrypt';
 
-export default function AdminWelcome() {
+export async function hashPassword (password: string) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  console.log("Hashed password", hashedPassword);
+}
+
+export default async function AdminWelcome() {
+
+  await hashPassword("semapass123");
+
   return (
     <main className="min-h-screen w-full">
       <section className="min-h-screen bg-white dark:bg-black flex items-center px-6">
