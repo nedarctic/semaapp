@@ -235,7 +235,8 @@ export default async function TeamPage() {
           </div>
 
           <Link href={"/create-member"} className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-bold flex flex-row items-center justify-center">
-            <TiUserAdd size={20} className="text-white dark:text-black mr-2" />Add new member</Link>
+            <TiUserAdd size={20} className="text-white dark:text-black mr-2" />Add new member
+          </Link>
 
         </main>
       </div>
@@ -276,12 +277,12 @@ export default async function TeamPage() {
           Handlers
         </h1>
 
-        <p className="text-xs text-gray-500 max-w-xl">
+        {teamHandlers?.data!.length ? (<p className="text-xs text-gray-500 max-w-xl">
           Click on any row to view and manage team handler.
-        </p>
+        </p>) : ""}
 
         {/* handlers table */}
-        <table className="w-full mt-4 border border-black dark:border-white">
+        {teamHandlers?.data!.length ? (<table className="w-full mt-4 border border-black dark:border-white">
           <thead>
             <tr>
               <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
@@ -339,17 +340,18 @@ export default async function TeamPage() {
             })}
           </tbody>
         </table>
+        ) : (<p className="text-sm font-bold dark:text-white text-black mt-2">No handlers yet.</p>)}
 
         {/* admins table */}
         <h1 className="text-black dark:text-white text-3xl font-extrabold mt-10 mb-2">
           Admins
         </h1>
 
-        <p className="text-xs text-gray-500 max-w-xl">
+        {teamAdmins?.data!.length ? (<p className="text-xs text-gray-500 max-w-xl">
           Click on any row to view and manage team admin.
-        </p>
+        </p>) : ""}
 
-        <table className="w-full mt-4 border border-black dark:border-white">
+        {teamAdmins?.data!.length ? (<table className="w-full mt-4 border border-black dark:border-white">
           <thead>
             <tr>
               <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
@@ -392,6 +394,7 @@ export default async function TeamPage() {
             })}
           </tbody>
         </table>
+      ) : (<p className="text-sm font-bold dark:text-white text-black mt-2">No admins yet.</p>)}
 
       </main>
     </div>
