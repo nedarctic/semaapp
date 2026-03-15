@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { reportingPages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getCompanyId } from "../team/page";
+import { IoIosSettings } from "react-icons/io";
 
 export default async function ReportingPage() {
   const response = await getCompanyId();
@@ -82,9 +83,9 @@ export default async function ReportingPage() {
             )}
           </div>
         ) : (
-          <p className="text-black/70 dark:text-white/70">
-            No reporting page has been configured yet. Click "Configure Reporting Page" above to get started.
-          </p>
+          <div>
+            <p className="text-sm font-bold">Reporting page not configured.</p>
+          </div>
         )}
       </section>
     </div>
