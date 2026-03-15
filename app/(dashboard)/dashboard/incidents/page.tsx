@@ -2,7 +2,7 @@ import { FaHome } from "react-icons/fa";
 import { getIncidentDetails } from "@/lib/helpers";
 import { getHandler } from "@/lib/helpers";
 import { db } from "@/lib/db";
-import { incidents } from "@/db/schema";
+import { incidents, reportingPages } from "@/db/schema";
 import { getServerSession } from "next-auth";
 import { getCompanyId } from "../team/page";
 import { eq } from "drizzle-orm";
@@ -10,6 +10,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { notFound } from "next/navigation";
 import { InferSelectModel } from "drizzle-orm";
 import Link from "next/link";
+import { BreadCrumb } from "@/components/BreadCrumb";
+import { CiLink } from "react-icons/ci";
+
 
 type Incident = InferSelectModel<typeof incidents>;
 
@@ -18,11 +21,55 @@ export async function getIncidents(companyId: string) {
   return data;
 }
 
+async function getReportingPageUrl(companyId: string) {
+  const { reportingPageUrl } = await db
+    .select()
+    .from(reportingPages)
+    .where(
+      eq(reportingPages.companyId, companyId)
+    ).then(res => res[0])
+
+  return reportingPageUrl;
+}
+
 export default async function IncidentPage() {
 
-    const data = await getCompanyId();
-    const companyId = data.data; 
-    const incidents: Incident[] = await getIncidents(companyId!);
+  const data = await getCompanyId();
+  const companyId = data.data;
+  const incidents: Incident[] = await getIncidents(companyId!);
+  const reportingPageUrl = await getReportingPageUrl(companyId!);
+
+  const crumbs: Map<string, string> = new Map();
+  crumbs.set(`/dashboard/incidents`, "Incidents");
+
+  if (!incidents.length) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
+        <main className="flex min-h-screen w-full flex-col items-start justify-start p-10 bg-white dark:bg-black">
+
+          {/* page title */}
+          <p className="text-4xl font-extrabold text-black dark:text-white">
+            Incidents
+          </p>
+
+          {/* breadcrumb */}
+          <BreadCrumb crumbs={crumbs} />
+
+          <div className="py-8">
+            <p className="text-sm font-bold">No incidents yet.</p>
+          </div>
+
+          {!reportingPageUrl && (<div className="py-8">
+            <p className="text-sm font-bold">No incidents yet. Begin by creating a reporting link and sharing.</p>
+          </div>)}
+
+          {!reportingPageUrl && (<Link href={"/dashboard/reporting/configure"} className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-bold flex flex-row items-center justify-center">
+            <CiLink size={20} className="text-white dark:text-black mr-2" />Create new reporting link
+          </Link>)}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
