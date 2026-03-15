@@ -23,7 +23,7 @@ export const authOptions: AuthOptions = {
 
                 const passwordMatch = await bcrypt.compare(credentials.password, user.password!);
 
-                if (!passwordMatch) return null;
+                if (!passwordMatch) console.log("Password mismatch");
 
                 return {
                     id: user.id.toString(),
@@ -132,9 +132,18 @@ export const authOptions: AuthOptions = {
 
         async session({ session, token }) {
 
-            if (token && session.user) {
+            if (token && token.type == 'admin') {
                 session.user.id = token.id;
-                session.type = (token as any).type;
+                session.user.type = 'admin';
+            }
+
+            if (token && token.type == 'handler') {
+                session.user.id = token.id;
+                session.user.type = 'handler';
+            }
+
+            if (token && token.type == 'incident') {
+                session.user.type = 'incident';
                 session.incidentId = (token as any).incidentId;
                 session.incidentIdDisplay = (token as any).incidentIdDisplay;
             }
@@ -149,3 +158,4 @@ export const authOptions: AuthOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+
