@@ -1,57 +1,156 @@
 import { FaHome } from "react-icons/fa";
-import {
-  getTotalIncidents,
-  getAvgResolutionTime,
-  getTotalIncidentsDueSoon,
-  getTotalOpenIncidents,
-  getTotalOverdueIncidents,
-  getSLACompliance,
-  getChartData,
-  getIncidentsDueSoon,
-  getOverdueIncidents,
-  getUnassignedIncidents,
-  getAllHandlersDetails,
-} from '@/lib/helpers'
+
 import { StatusChart } from "@/components/StatusChart";
 import { KpiCard } from "@/components/KpiCard";
 import { IncidentTrendsChartWrapper } from "@/components/IncidentTrendsChartWrapper";
 import { CategoriesChartWrapper } from "@/components/CategoriesChartWrapper"
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
-import { incidents } from "@/db/schema";
+import { incidents, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getCompanyId } from "./team/page";
 import { getIncidents } from "./incidents/page";
+import { getHandlerDetails } from "./team/[id]/page";
+import { getTeamHandlersIncidentsWithDetails } from "./team/page";
 
-export async function totalIncidents (companyId: string) {
+export async function totalIncidents(companyId: string) {
   const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
   return data.length;
+}
+
+export async function totalOpenIncidents(companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  const openIncidents = data.filter((incident) => incident.status !== "Closed");
+  return openIncidents.length;
+}
+
+export async function totalOverdueIncidents(companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  const overdueIncidents = data.filter((incident) => {
+    return new Date(incident.deadlineAt!).getTime() < Date.now()
+  })
+  return overdueIncidents.length;
+}
+
+export async function totalIncidentsDueSoon(companyId: string, days: number) {
+
+  let now = Date.now();
+  const limit = now + days * 24 * 60 * 60 * 1000;
+
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  
+  const incidentsDueSoon = data.filter(({ deadlineAt }) => {
+    const deadline = new Date(deadlineAt!).getTime();
+    return deadline > now && deadline < limit;
+  });
+
+  return incidentsDueSoon.length;
+}
+
+export async function SLACompaliance(companyId: string) {
+
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  // get closed incidents
+  const closed = data.filter(({ closedAt }) => closedAt !== null);
+
+  if (closed.length === 0) return 0;
+
+  // filter those that were closed before deadline
+  const within_SLA = closed.filter(({ deadlineAt, closedAt }) => {
+    const deadline = new Date(deadlineAt!).getTime();
+    const closed = new Date(closedAt!).getTime();
+    return closed <= deadline;
+  }).length;
+
+  // return percentage of SLA compliance
+  return Math.round((within_SLA / data.length) * 100);
+}
+
+export async function unassignedIncidents(companyId: string) {
+
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+
+  return Array.from(data.filter(({ assignedHandlerId }) => {
+    return assignedHandlerId === null;
+  }));
+}
+
+export async function incidentsDueSoon(companyId: string, days: number) {
+
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+
+  return Array.from(data.filter(({ deadlineAt }) => {
+    const deadline = new Date(deadlineAt!).getTime();
+    const now = Date.now();
+    const limit = Date.now() * days * 24 * 60 * 60 * 1000;
+    return deadline > now && limit > deadline;
+  }));
+}
+
+export async function overdueIncidents(companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+  const overdueIncidents = data.filter((incident) => {
+    return new Date(incident.deadlineAt!).getTime() < Date.now()
+  })
+  return overdueIncidents;
+}
+
+export async function chartData(companyId: string) {
+  const data = await db.select().from(incidents).where(eq(incidents.companyId, companyId));
+
+  if (data.length) {
+    return data.reduce((acc, incident) => {
+      acc[incident.status]++;
+      return acc;
+    }, {
+      New: 0,
+      "In Review": 0,
+      Investigation: 0,
+      Resolved: 0,
+      Closed: 0,
+    } as Record<string, number>);
+  } else {
+    return null
+  }
+}
+
+export async function handlersDetails(companyId: string) {
+  const handlers = await db
+    .select()
+    .from(users)
+    .where(eq(users.companyId, companyId))
+    .then(res => res.filter(user => user.role == "Handler"));
+
+  const results = await Promise.all(
+    handlers.map(h => getHandlerDetails(h.id))
+  );
+
+  return results.filter(Boolean);
 }
 
 export async function avgResolutionTime(companyId: string): Promise<number> {
 
   const incidents = await getIncidents(companyId);
 
-    // get closed incidents
-    const closed = incidents.filter(({ closedAt }) => closedAt !== null);
+  // get closed incidents
+  const closed = incidents.filter(({ closedAt }) => closedAt !== null);
 
-    if (closed.length === 0) return 0;
+  if (closed.length === 0) return 0;
 
-    // get time taken to resolve all incidents
-    const total_resoulution_time = closed.reduce((sum, incident) => {
-        const created = new Date(incident.createdAt).getTime();
-        const closed = new Date(incident.closedAt!).getTime();
-        return sum + (closed - created);
-    }, 0);
+  // get time taken to resolve all incidents
+  const total_resoulution_time = closed.reduce((sum, incident) => {
+    const created = new Date(incident.createdAt).getTime();
+    const closed = new Date(incident.closedAt!).getTime();
+    return sum + (closed - created);
+  }, 0);
 
-    // divide total resolution time by total resolved cases
-    const total_avg_microsecs = total_resoulution_time / closed.length;
+  // divide total resolution time by total resolved cases
+  const total_avg_microsecs = total_resoulution_time / closed.length;
 
-    // convert to days and round
-    return Math.round(total_avg_microsecs / (1000 * 60 * 60 * 24));
+  // convert to days and round
+  return Math.round(total_avg_microsecs / (1000 * 60 * 60 * 24));
 
 }
 
@@ -59,27 +158,34 @@ export async function avgResolutionTime(companyId: string): Promise<number> {
 export default async function Home() {
 
   const session = await getServerSession(authOptions);
+  console.log("Session:", session)
 
-  if(!session || session.type !== "admin"){
-    redirect("/signin");
-  }
+  // if(!session || session.type !== "admin"){
+  //   redirect("/signin");
+  // }
 
-  console.log("Admin session details:", session)
+  // console.log("Admin session details:", session)
 
   const companyId = await getCompanyId();
 
   const total_incidents = await totalIncidents(companyId?.data!);
   const avg_resolution_time = await avgResolutionTime(companyId?.data!);
-  const total_incidents_due_soon = getTotalIncidentsDueSoon(3);
-  const total_open_incidents = getTotalOpenIncidents();
-  const total_overdue_incidents = getTotalOverdueIncidents();
-  const sla_compliance = getSLACompliance();
-  const chart_data = getChartData();
-  const unassigned_incidents = await getUnassignedIncidents();
-  const incidents_due_soon = await getIncidentsDueSoon(3);
-  const overdue_incidents = await getOverdueIncidents();
+  const total_incidents_due_soon = await totalIncidentsDueSoon(companyId?.data!, 3);
+  const total_open_incidents = await totalOpenIncidents(companyId?.data!);
+  const total_overdue_incidents = await totalOverdueIncidents(companyId?.data!);
+  const sla_compliance = await SLACompaliance(companyId?.data!);
+  const chart_data = await chartData(companyId?.data!);
+  const unassigned_incidents = await unassignedIncidents(companyId?.data!);
+  const incidents_due_soon = await incidentsDueSoon(companyId?.data!, 3);
+  const overdue_incidents = await overdueIncidents(companyId?.data!);
 
-  const handlers_details = await getAllHandlersDetails();
+  const handlers_details = await getTeamHandlersIncidentsWithDetails();
+
+  const handlers = [];
+
+  for (const [id, handler] of handlers_details!) {
+    handlers.push(handler);
+  }
 
 
   return (
@@ -100,26 +206,26 @@ export default async function Home() {
             total_incidents={total_incidents}
             total_open_incidents={total_open_incidents}
             total_overdue_incidents={total_overdue_incidents}
-            total_incidents_due_soon={total_incidents_due_soon}
+            total_incidents_due_soon={total_incidents_due_soon!}
             avg_resolution_time={avg_resolution_time}
             sla_compliance={sla_compliance}
           />
         </section>
 
         {/* STATUS BREAKDOWN */}
-        <section className="w-full">
+        {total_incidents ? (<section className="w-full">
 
           {/* stacked bar chart showing: new, in review, investigation, resolved, closed */}
           {/* under the chart, clickable legend that filters list */}
 
-          <h1 className="text-black text-3xl font-extrabold mt-20">Status Breakdown</h1>
+          <h1 className="text-black dark:text-white text-3xl font-extrabold mt-20">Status Breakdown</h1>
 
-          <StatusChart data={chart_data} />
-        </section>
+          {chart_data ? (<StatusChart data={chart_data} />) : (<p className="text-sm font-bold text-black dark:text-white">No incidents yet.</p>)}
+        </section>) : (<p className="text-sm font-bold text-black dark:text-white mt-4 text-center">The company has no incidents yet.</p>)}
 
         {/* URGENT CASES LIST */}
 
-        <section className="w-full">
+        {total_incidents ? (<section className="w-full">
           {/* Needs attention panel - short list max 5-7 of: overdue incidents, due soon, unassigned incidents */}
           {/* each row: incident id, category, status, deadline (with overview by x days), assigned handler (or "Unassigned"), quick action - assign handler, open incident  */}
 
@@ -127,7 +233,7 @@ export default async function Home() {
 
           <h1 className="text-red-500 text-2xl font-extrabold mt-4">Overdue incidents</h1>
 
-          <table className="w-full mt-5 border border-white">
+          {overdue_incidents.length ? (<table className="w-full mt-5 border border-white">
             <thead>
               <tr>
                 <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">Incident ID</th>
@@ -138,21 +244,22 @@ export default async function Home() {
               </tr>
             </thead>
             <tbody>
-              {overdue_incidents.map(({ id, category, status, deadline_at, assigned_handler_user_id, incident_id_display }) => (
+              {overdue_incidents.map(({ id, category, status, deadlineAt, assignedHandlerId, incidentIdDisplay }) => (
                 <tr key={id}>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incident_id_display}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incidentIdDisplay}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{category}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{status}</td>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadline_at!))}</td>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{assigned_handler_user_id}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadlineAt!))}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{assignedHandlerId}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          ) : (<p className="text-sm font-bold text-black dark:text-white">No incidents yet.</p>)}
 
           <h1 className="text-red-500 text-2xl font-extrabold mt-10">Incidents due in 3 days</h1>
 
-          <table className="w-full mt-5 border border-white">
+          {incidents_due_soon.length ? (<table className="w-full mt-5 border border-white">
             <thead>
               <tr>
                 <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">Incident ID</th>
@@ -163,21 +270,21 @@ export default async function Home() {
               </tr>
             </thead>
             <tbody>
-              {incidents_due_soon.map(({ id, category, status, deadline_at, assigned_handler_user_id, incident_id_display }) => (
+              {incidents_due_soon.map(({ id, category, status, deadlineAt, assignedHandlerId, incidentIdDisplay }) => (
                 <tr key={id}>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incident_id_display}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incidentIdDisplay}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{category}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{status}</td>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadline_at!))}</td>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{assigned_handler_user_id}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadlineAt!))}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{assignedHandlerId}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table>) : (<p className="text-sm font-bold text-black dark:text-white">No incidents yet.</p>)}
 
           <h1 className="text-red-500 text-2xl font-extrabold mt-10">Unassigned incidents</h1>
 
-          <table className="w-full mt-5 border border-white">
+          {unassigned_incidents.length ? (<table className="w-full mt-5 border border-white">
             <thead>
               <tr>
                 <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">Incident ID</th>
@@ -187,39 +294,39 @@ export default async function Home() {
               </tr>
             </thead>
             <tbody>
-              {unassigned_incidents.map(({ id, category, status, deadline_at, incident_id_display }) => (
+              {unassigned_incidents.map(({ id, category, status, deadlineAt, incidentIdDisplay }) => (
                 <tr key={id}>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incident_id_display}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{incidentIdDisplay}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{category}</td>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{status}</td>
-                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadline_at!))}</td>
+                  <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">{new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short", day: "2-digit", }).format(new Date(deadlineAt!))}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table>) : (<p className="text-sm font-bold text-black dark:text-white">No incidents yet.</p>)}
 
-        </section>
+        </section>) : ''}
 
 
         {/* INCIDENT TRENDS */}
-        <section className="w-full">
+        {total_incidents ? (<section className="w-full">
           {/* simple bar chart showing incidents created over time */}
           {/* toggle last 6 days, last 30 days, last 6 months */}
           {/* overlay of closed incidents line for throughput comparison */}
-          <h1 className="text-black text-3xl font-extrabold mt-10 mb-4">Incident trends</h1>
-          <h1 className="text-black text-2xl font-extrabold mt-4">Throughput (total against closed ones)</h1>
+          <h1 className="text-black dark:text-white text-3xl font-extrabold mt-10 mb-4">Incident trends</h1>
+          <h1 className="text-black dark:text-white text-2xl font-extrabold mt-4">Throughput (total against closed ones)</h1>
           <IncidentTrendsChartWrapper />
 
           {/* CATEGORY DISTRIBUTION */}
 
           {/* a compact chart showing incidents by category - corruption, bribery, etc */}
-          <h1 className="text-black text-2xl font-extrabold mt-8">Category distribution</h1>
+          <h1 className="text-black dark:text-white text-2xl font-extrabold mt-8">Category distribution</h1>
           <CategoriesChartWrapper />
 
-        </section>
+        </section>) : ''}
 
         {/* TEAM WORKLOAD */}
-        <section className="w-full">
+        {total_incidents ? (<section className="w-full">
 
           {/* table showing: handler name, open incidents assigned, overdue incidents, avg resolution time */}
           {/* admin should be able to click handler and show filtered incident list  */}
@@ -228,7 +335,7 @@ export default async function Home() {
             Handler workload & performance
           </h1>
 
-          <table className="w-full mt-5 border border-white">
+          {handlers.length ? (<table className="w-full mt-5 border border-white">
             <thead>
               <tr>
                 <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
@@ -250,41 +357,41 @@ export default async function Home() {
             </thead>
 
             <tbody>
-              {handlers_details.map(handler => (
-                <tr key={handler!.handler_id}>
+              {handlers.map(handler => (
+                <tr key={handler!.id}>
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">
-                    {handler!.handler_name}
+                    {handler!.name}
                   </td>
 
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">
-                    {handler!.total_assigned_incidents}
+                    {handler!.totalAssignedIncidents}
                   </td>
 
                   <td className="hover:bg-black hover:text-white hover:border-white border border-black dark:border-white text-black dark:text-white text-sm font-normal flex-1 px-4 py-2">
-                    {handler!.total_open_incidents}
+                    {handler!.totalOpenIncidents}
                   </td>
 
                   <td
-                    className={`hover:border-white border border-black dark:border-white text-md px-4 py-2 text-sm ${handler!.total_overdue_incidents > 0
-                        ? "text-red-600 font-bold hover:bg-red-600 hover:text-white"
-                        : "text-black dark:text-white hover:bg-black hover:text-white"
+                    className={`hover:border-white border border-black dark:border-white text-md px-4 py-2 text-sm ${handler!.overdueIncidents > 0
+                      ? "text-red-600 font-bold hover:bg-red-600 hover:text-white"
+                      : "text-black dark:text-white hover:bg-black hover:text-white"
                       }`}
                   >
-                    {handler!.total_overdue_incidents}
+                    {handler!.overdueIncidents}
                   </td>
 
                   <td className="hover:bg-black hover:text-white hover:border-white text-sm border border-black dark:border-white text-black dark:text-white text-md px-4 py-2">
-                    {handler!.avg_resolution_time_days > 0
-                      ? `${handler!.avg_resolution_time_days} days`
+                    {handler!.avgResolutionTime > 0
+                      ? `${handler!.avgResolutionTime} days`
                       : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table>) : (<p className="text-sm font-bold text-black dark:text-white">No handlers yet. Go to team to create new members.</p>)}
 
 
-        </section>
+        </section>) : ''}
 
 
 
