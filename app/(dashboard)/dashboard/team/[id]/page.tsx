@@ -230,11 +230,11 @@ export default async function TeamMember({ params }: { params: Promise<{ id: str
                         Workload snapshot
                     </h2>
 
-                    <p className="text-xs text-gray-500 max-w-xl">
+                    {totalAssignedIncidents ? (<p className="text-xs text-gray-500 max-w-xl">
                         Click on the row to view and manage the incidents assigned to this handler.
-                    </p>
+                    </p>) : (<p className="text-sm font-bold text-black dark:text-white">No incidents assigned to this handler yet.</p>)}
 
-                    <table className="w-full border border-white">
+                    {totalAssignedIncidents ? (<table className="w-full border border-white">
                         <thead>
                             <tr>
                                 <th className="border border-white dark:border-black bg-black dark:bg-white dark:text-black text-white text-sm font-bold px-4 py-3 text-start">
@@ -274,11 +274,11 @@ export default async function TeamMember({ params }: { params: Promise<{ id: str
                                 ))}
                             </tr>
                         </tbody>
-                    </table>
+                    </table>) : ''}
 
-                    <p className="text-xs text-gray-500">
+                    {totalAssignedIncidents ? (<p className="text-xs text-gray-500">
                         Workload metrics reflect active case assignments and SLA adherence.
-                    </p>
+                    </p>) : ''}
                 </section>
 
             </main>

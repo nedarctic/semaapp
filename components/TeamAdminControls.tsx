@@ -127,9 +127,9 @@ export function TeamAdminControls({ id, role, status, unassignedIncidents }: { i
                             Assign handler a new incident
                         </h3>
 
-                        <p className="text-sm text-gray-500 mb-6">
+                        {unassignedIncidents.length ? (<p className="text-sm text-gray-500 mb-6">
                             Select one
-                        </p>
+                        </p>) : ''}
 
                         <div className="flex flex-col items-center justify-center gap-4 mb-6">
                             {unassignedIncidents !== null && unassignedIncidents.length > 0  ? unassignedIncidents?.map((incident, index) => (
