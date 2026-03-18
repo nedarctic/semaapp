@@ -12,9 +12,10 @@ type ReportingPage = InferSelectModel<typeof reportingPages>;
 interface Props {
   reportingPageData: ReportingPage[];
   companyId: string;
+  categoryNames: { id: string; companyId: string; categoryName: string; createdAt: Date; }[];
 }
 
-export default function ReportingPageConfigure({ reportingPageData, companyId }: Props) {
+export default function ReportingPageConfigure({ reportingPageData, companyId, categoryNames }: Props) {
   const data = reportingPageData[0] || {};
 
   const [title, setTitle] = useState(data.title ?? "");
@@ -23,14 +24,15 @@ export default function ReportingPageConfigure({ reportingPageData, companyId }:
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reportingPageUrl, setReportingPageUrl] = useState(data.reportingPageUrl ?? "");
+  const [category, setCategory] = useState<string>("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
 
     try {
-      const res = await saveReportingPage(companyId, title, introContent, policyUrl, reportingPageUrl);
+      const res = await saveReportingPage(companyId, title, introContent, policyUrl, reportingPageUrl, category);
       if (res.updated) setStatus("Reporting page updated successfully!");
       else if (res.inserted) setStatus("Reporting page created successfully!");
     } catch (err) {
@@ -111,6 +113,27 @@ export default function ReportingPageConfigure({ reportingPageData, companyId }:
               placeholder="https://yourcompany.com/policy"
               className="w-full border-2 border-black dark:border-white rounded-xl px-4 py-3 bg-transparent text-black dark:text-white"
             />
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-black dark:text-white font-semibold text-sm">
+              Add new incident category
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Sexual assault, corruption, etc."
+              className="w-full border-2 border-black dark:border-white rounded-xl px-4 py-3 bg-transparent text-black dark:text-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            {categoryNames.length ? categoryNames
+            .map(category => (<div key={category.id} 
+            className="flex flex-col items-center justify-center bg-black dark:bg-white rounded-md text-white dark:text-black font-bold text-sm p-4">
+              {category.categoryName}
+            </div>)) : "Create a category for incidents to appear here"}
           </div>
 
           {/* Submit */}

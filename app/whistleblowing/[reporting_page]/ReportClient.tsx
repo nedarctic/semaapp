@@ -55,7 +55,7 @@ export default function ReportClient({
             </div>
 
             <Link
-              href={`/whistleblowing/${reportingPageLink}/new`}
+              href={`/whistleblowing/${reportingPageLink}/${companyId}`}
               className="mt-8 inline-flex items-center justify-center w-full rounded-full px-6 py-4 bg-black text-white dark:bg-white dark:text-black font-semibold text-sm hover:opacity-90 transition"
             >
               Start a Report

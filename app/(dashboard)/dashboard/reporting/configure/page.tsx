@@ -2,7 +2,7 @@ import { getCompanyId } from "../../team/page";
 import { eq } from "drizzle-orm";
 import ReportingPageConfigure from "./ReportingPageConfigureClient";
 import { db } from "@/lib/db";
-import { reportingPages } from "@/db/schema";
+import { reportingPages, categories } from "@/db/schema";
 
 export default async function ReportingConfig () {
 
@@ -13,8 +13,13 @@ export default async function ReportingConfig () {
 
     console.log("Company ID:", companyId);
 
+    const categoryNames = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.companyId, companyId));
+
     // fetch the reporting page data related to it
     const reportingPageData = await db.select().from(reportingPages).where(eq(reportingPages.companyId, companyId))
 
-    return <ReportingPageConfigure companyId={companyId} reportingPageData={reportingPageData} />
+    return <ReportingPageConfigure categoryNames={categoryNames} companyId={companyId} reportingPageData={reportingPageData} />
 }

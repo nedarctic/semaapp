@@ -46,6 +46,7 @@ export async function CreateIncident(
         const location = formData.get("location") as string;
         const involvedPeople = formData.get("involvedPeople") as string | null;
         const incidentDate = formData.get("incidentDate") as string;
+        const duration = formData.get("duration") as string;
 
         const name = formData.get("name") as string | null;
         const email = formData.get("email") as string | null;
@@ -92,6 +93,7 @@ export async function CreateIncident(
                 reporterId,
                 status: "New",
                 secretCodeHash,
+                duration,
             });
         });
 

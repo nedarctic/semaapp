@@ -13,7 +13,7 @@ export async function getHandler(handlerId: string) {
 
 export default async function HandlerIncidentsPage() {
     const session = await getServerSession(authOptions);
-    if (!session || session.type !== "handler") redirect("/handler");
+    if (!session || session.user.type !== "handler") redirect("/handler");
     console.log("Handler session details:", session);
     
     const handler = await getHandler(session.user.id);

@@ -61,6 +61,7 @@ export const incidents = pgTable("incidents", {
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
     closedAt: timestamp("closed_at", { withTimezone: true }), 
+    duration: text('duration')
 });
 
 export const companies = pgTable("companies", {

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { CreateIncident } from "@/actions/CreateIncident";
 import { useState } from "react";
+import Link from "next/link";
 
 type CreateIncidentState =
   | { success: false; error?: string }
@@ -10,7 +11,7 @@ type CreateIncidentState =
 
 const initialState: CreateIncidentState = { success: false };
 
-export function NewIncidentReportClient() {
+export function NewIncidentReportClient({ categories, reportingLink }: { categories: { id: string; companyId: string; categoryName: string; createdAt: Date; }[], reportingLink: string; }) {
   const [state, formAction, pending] = useActionState(CreateIncident, initialState);
   const [reporterType, setReporterType] = useState<
     "Anonymous" | "Confidential" | null
@@ -47,11 +48,10 @@ export function NewIncidentReportClient() {
             <button
               type="button"
               onClick={() => setReporterType("Anonymous")}
-              className={`border-2 rounded-2xl p-6 text-left transition ${
-                reporterType === "Anonymous"
-                  ? "border-black dark:border-white"
-                  : "border-black/30 dark:border-white/30"
-              }`}
+              className={`border-2 rounded-2xl p-6 text-left transition ${reporterType === "Anonymous"
+                ? "border-black dark:border-white"
+                : "border-black/30 dark:border-white/30"
+                }`}
             >
               <p className="font-semibold">Yes, report anonymously</p>
               <p className="text-sm opacity-70">
@@ -62,11 +62,10 @@ export function NewIncidentReportClient() {
             <button
               type="button"
               onClick={() => setReporterType("Confidential")}
-              className={`border-2 rounded-2xl p-6 text-left transition ${
-                reporterType === "Confidential"
-                  ? "border-black dark:border-white"
-                  : "border-black/30 dark:border-white/30"
-              }`}
+              className={`border-2 rounded-2xl p-6 text-left transition ${reporterType === "Confidential"
+                ? "border-black dark:border-white"
+                : "border-black/30 dark:border-white/30"
+                }`}
             >
               <p className="font-semibold">No, share my details confidentially</p>
               <p className="text-sm opacity-70">
@@ -84,10 +83,7 @@ export function NewIncidentReportClient() {
             className="w-full border-2 border-black dark:border-white rounded-xl px-4 py-3 bg-transparent"
           >
             <option className="text-black font-bold" value="">Select incident category</option>
-            <option className="text-black">Corruption</option>
-            <option className="text-black">Bribery</option>
-            <option className="text-black">Sexual abuse</option>
-            <option className="text-black">Discrimination</option>
+            {categories.length ? categories.map(category => (<option key={category.id} className="text-black">{category.categoryName}</option>)) : ""}
           </select>
 
           <textarea
@@ -111,10 +107,19 @@ export function NewIncidentReportClient() {
             className="w-full border-2 rounded-xl px-4 py-3 bg-transparent"
           />
 
+          <label htmlFor="incidentDate" className="text-sm font-normal text-black dark:text-white mb-3">When did this incident occur?</label>
+
           <input
             type="date"
             name="incidentDate"
+            id="incidentDate"
             required
+            className="w-full border-2 rounded-xl px-4 py-3 bg-transparent"
+          />
+
+          <input
+            name="duration"
+            placeholder="How long has this occurred?"
             className="w-full border-2 rounded-xl px-4 py-3 bg-transparent"
           />
 
@@ -174,6 +179,8 @@ export function NewIncidentReportClient() {
             <p className="mt-1 text-xl tracking-widest">
               {state.secretCode}
             </p>
+
+            <Link className="mt- 6bg-black dark:bg-white text-white dark:text-black font-sm flex flex-col items-center justify-center rounded-md p-4" href={`/whistleblowing/${reportingLink}/track`}>Go to tracking page</Link>
           </div>
         )}
       </div>
