@@ -21,7 +21,5 @@ export default async function Proxy(
         return NextResponse.redirect(signInUrl)
     }
 
-    console.log('token:', token)
-
     return NextResponse.next();
 }

@@ -14,7 +14,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
     const { id } = await params;
     const session = await getServerSession(authOptions);
 
-    if(!session || session.type !== "handler") redirect("/handler")
+    if(!session || session.user.type !== "handler") redirect("/handler")
     const userId = await session?.user.id;
     const initialMessages = await getInitialMessages(id);
 

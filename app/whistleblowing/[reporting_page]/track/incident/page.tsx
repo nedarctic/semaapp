@@ -29,7 +29,7 @@ export async function getInitialMessages (incidentId: string) {
 
 export default async function TrackIncidentPage() {
     const session = await getServerSession(authOptions);
-    if (!session || session.type !== "incident") redirect("https://www.semafacts.com");
+    if (!session || session.user.type !== "incident") redirect("https://www.semafacts.com");
 
     const incidentId: unknown = session!.incidentId;
     const [incident] = await getIncident(incidentId);
